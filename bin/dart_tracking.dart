@@ -18,7 +18,7 @@ void main() async {
   final loginResponse = await http.post(
     loginUrl,
     headers: {'Content-Type': 'application/json'},
-    body: json.encode({"name": username, "password": password}), // Changed to "name"
+    body: json.encode({"name": username, "password": password}),
   );
   
   if (loginResponse.statusCode != 200) {
@@ -27,8 +27,8 @@ void main() async {
   }
   
   final loginData = json.decode(loginResponse.body) as Map<String, dynamic>;
-  final int userId = loginData['user_id']; // Changed to 'user_id'
-  final String userName = loginData['name']; // Changed to 'name'
+  final int userId = loginData['user_id'];
+  final String userName = loginData['name'];
   
   while (true) {
     print("\n========= Expense Tracking App =========");
@@ -44,41 +44,47 @@ void main() async {
     String? choice = stdin.readLineSync();
     
     if (choice == "1") {
-      // Corrected URL
       final expensesUrl = Uri.parse('http://localhost:3000/expenses?user_id=$userId');
       final expensesResponse = await http.get(expensesUrl);
       
       if (expensesResponse.statusCode == 200) {
         final expenses = json.decode(expensesResponse.body) as List;
-        int total = 0;
+        double total = 0;
         
         print("------------- All expenses -----------");
         for (var expense in expenses) {
-          // Changed to 'amount' and 'created_at'
-          print("${expense['id']}. ${expense['item']} : ${expense['amount']}฿ : ${expense['created_at']}");
-          total += (expense['amount'] as num).toInt(); // Changed to 'amount'
+          // Parse amount as double (it might be returned as string from API)
+          final amount = expense['amount'] is String 
+              ? double.parse(expense['amount']) 
+              : (expense['amount'] as num).toDouble();
+          
+          print("${expense['id']}. ${expense['item']} : $amount฿ : ${expense['created_at']}");
+          total += amount;
         }
-        print("Total expenses = ${total}฿");
+        print("Total expenses = ${total.toStringAsFixed(2)}฿");
       } else {
         print("Error: ${expensesResponse.body}");
       }
       
     } else if (choice == "2") {
-      // Corrected URL
       final todayExpensesUrl = Uri.parse('http://localhost:3000/expenses/today?user_id=$userId');
       final todayExpensesResponse = await http.get(todayExpensesUrl);
       
       if (todayExpensesResponse.statusCode == 200) {
         final expenses = json.decode(todayExpensesResponse.body) as List;
-        int total = 0;
+        double total = 0;
         
         print("------------- Today's expenses -----------");
         for (var expense in expenses) {
-          // Changed to 'amount' and 'created_at'
-          print("${expense['id']}. ${expense['item']} : ${expense['amount']}฿ : ${expense['created_at']}");
-          total += (expense['amount'] as num).toInt(); // Changed to 'amount'
+          // Parse amount as double (it might be returned as string from API)
+          final amount = expense['amount'] is String 
+              ? double.parse(expense['amount']) 
+              : (expense['amount'] as num).toDouble();
+          
+          print("${expense['id']}. ${expense['item']} : $amount฿ : ${expense['created_at']}");
+          total += amount;
         }
-        print("Total expenses = ${total}฿");
+        print("Total expenses = ${total.toStringAsFixed(2)}฿");
       } else {
         print("Error: ${todayExpensesResponse.body}");
       }
@@ -88,7 +94,6 @@ void main() async {
       String? searchTerm = stdin.readLineSync();
       
       if (searchTerm != null && searchTerm.isNotEmpty) {
-        // Corrected URL and parameter name
         final searchUrl = Uri.parse('http://localhost:3000/expenses/search?user_id=$userId&q=$searchTerm');
         final searchResponse = await http.get(searchUrl);
         
@@ -97,8 +102,12 @@ void main() async {
           
           if (expenses.isNotEmpty) {
             for (var expense in expenses) {
-              // Changed to 'amount' and 'created_at'
-              print("${expense['id']}. ${expense['item']} : ${expense['amount']}฿ : ${expense['created_at']}");
+              // Parse amount as double
+              final amount = expense['amount'] is String 
+                  ? double.parse(expense['amount']) 
+                  : (expense['amount'] as num).toDouble();
+              
+              print("${expense['id']}. ${expense['item']} : $amount฿ : ${expense['created_at']}");
             }
           } else {
             print("No item: $searchTerm");
@@ -112,31 +121,30 @@ void main() async {
       print("===== Add new item =====");
       stdout.write("Item: ");
       String? item = stdin.readLineSync();
-      stdout.write("Amount: "); // Changed from "Paid" to "Amount"
+      stdout.write("Amount: ");
       String? amountInput = stdin.readLineSync();
       
       if (item != null && amountInput != null && item.isNotEmpty && amountInput.isNotEmpty) {
         try {
-          int amount = int.parse(amountInput);
-          // Corrected URL and request body
+          double amount = double.parse(amountInput);
           final addUrl = Uri.parse('http://localhost:3000/expenses');
           final addResponse = await http.post(
             addUrl,
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              "user_id": userId, // Added user_id
+              "user_id": userId,
               "item": item, 
-              "amount": amount // Changed from "paid" to "amount"
+              "amount": amount
             }),
           );
           
-          if (addResponse.statusCode == 201) { // Changed from 200 to 201
+          if (addResponse.statusCode == 201) {
             print("Inserted!");
           } else {
             print("Error: ${addResponse.body}");
           }
         } catch (e) {
-          print("Invalid amount");
+          print("Invalid amount: $e");
         }
       } else {
         print("Invalid input");
@@ -150,7 +158,6 @@ void main() async {
       if (idInput != null && idInput.isNotEmpty) {
         try {
           int id = int.parse(idInput);
-          // Corrected URL
           final deleteUrl = Uri.parse('http://localhost:3000/expenses/$id');
           final deleteResponse = await http.delete(deleteUrl);
           
@@ -160,7 +167,7 @@ void main() async {
             print("Error: ${deleteResponse.body}");
           }
         } catch (e) {
-          print("Invalid ID");
+          print("Invalid ID: $e");
         }
       } else {
         print("Invalid input");
