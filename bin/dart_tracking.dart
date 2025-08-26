@@ -14,10 +14,11 @@ void main() async {
     return;
   }
   
-  final loginUrl = Uri.parse('http://localhost:3000/login');
+  final loginUrl = Uri.parse('http://localhost:3000/auth/login');
   final loginResponse = await http.post(
     loginUrl,
-    body: {"username": username, "password": password},
+    headers: {'Content-Type': 'application/json'},
+    body:json.encode( {"username": username, "password": password}),
   );
   
   if (loginResponse.statusCode != 200) {
@@ -114,7 +115,8 @@ void main() async {
           final addUrl = Uri.parse('http://localhost:3000/expenses/$userId');
           final addResponse = await http.post(
             addUrl,
-            body: {"item": item, "paid": paid.toString()},
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({"item": item, "paid": paid}),
           );
           
           if (addResponse.statusCode == 200) {
